@@ -10,18 +10,8 @@ import ru.povtchat.security.AuthenticateResponse
 
 fun Route.authenticate () {
     authenticate("jwt-auth") {
-        get("authenticate") {
-            call.respond(HttpStatusCode.OK, AuthenticateResponse("Successful"))
-        }
-    }
-}
-
-fun Route.getSecretInfo(){
-    authenticate("jwt-auth") {
-        get("secret") {
-            val principal = call.principal<JWTPrincipal>()
-            val userId = principal?.getClaim("userId", String::class)
-            call.respond(HttpStatusCode.OK, "Your login is: $userId")
+        post("/authenticate") {
+            call.respond(HttpStatusCode.OK, AuthenticateResponse(message = "Authenticate was successfully.", successful = true))
         }
     }
 }

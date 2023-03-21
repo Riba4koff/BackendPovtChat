@@ -8,19 +8,16 @@ import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import org.jetbrains.exposed.exceptions.ExposedSQLException
+import ru.povtchat.ModelRequests.SignUp.RegisterRequest
+import ru.povtchat.ModelRequests.SignUp.RegisterResponse
 import ru.povtchat.security.hash.HashingService
-import ru.povtchat.security.token.TokenConfig
-import ru.povtchat.security.token.TokenService
 
 fun Route.signUp(
-    hashingService: HashingService
+    hashingService: HashingService,
 ) {
     post("signup") {
-        val request = call.receiveOrNull<RegisterRequest>() ?: kotlin.run {
-            call.respond(HttpStatusCode.BadRequest, "check the fields for empty.")
-            return@post
-        }
-
+        val request = call.receive<RegisterRequest>()
+        
         val areFieldsBlank =
             request.email.isBlank()
                     || request.login.isBlank()
@@ -36,6 +33,8 @@ fun Route.signUp(
 
         val saltedHash = hashingService.generateSaltedHash(value = request.password)
 
+        val userFromDb = Users.fetchUserByLogin(request.login)
+
         val user = UserDTO(
             login = request.login,
             password = saltedHash.hash,
@@ -44,19 +43,30 @@ fun Route.signUp(
             salt = saltedHash.salt
         )
 
+        if (userFromDb?.email == request.email) call.respond(
+            RegisterResponse(
+                successful = false,
+                userHasAlreadyExists = true
+            )
+        )
         try {
             Users.insert(userDTO = user)
         } catch (e: ExposedSQLException) {
-            call.respond("User already exists.")
+            call.respond(
+                RegisterResponse(
+                    successful = false,
+                    userHasAlreadyExists = true
+                )
+            )
         } catch (e: java.lang.IllegalArgumentException) {
             call.respond(e.message.toString())
         }
 
-        call.respond(HttpStatusCode.OK, RegisterResponse(
-            login = user.login,
-            email = user.email,
-            username = user.username,
-            successful = true
-        ))
+        call.respond(
+            HttpStatusCode.OK, RegisterResponse(
+                successful = true,
+                userHasAlreadyExists = false
+            )
+        )
     }
 }

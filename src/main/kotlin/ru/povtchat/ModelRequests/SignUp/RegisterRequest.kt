@@ -1,4 +1,4 @@
-package com.backend.feautures.register
+package ru.povtchat.ModelRequests.SignUp
 
 import kotlinx.serialization.Serializable
 
@@ -8,12 +8,4 @@ data class RegisterRequest(
     val email: String,
     val password: String,
     val username: String
-)
-
-@Serializable
-data class RegisterResponse(
-    val login: String,
-    val email: String,
-    val username: String,
-    val successful: Boolean
 )

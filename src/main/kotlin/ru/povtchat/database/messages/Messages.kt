@@ -1,15 +1,15 @@
 package com.backend.database.messages
 
+import com.backend.database.users.Users
 import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.transactions.transaction
 
 object Messages : Table() {
     private val id_message = integer("id_message").autoIncrement()
     private val id_user = varchar("id_user", 50)
-    private val id_chat = varchar("id_chat", 50)
+    private val id_chat = long("id_chat")
     private val text = varchar("text", length = 500)
     private val time_sending = long("time_sending")
-
 
     fun insertMessage(messageDTO: MessageDTO) {
         transaction {
@@ -25,6 +25,14 @@ object Messages : Table() {
     fun deleteMessage(id_message: Int) {
         transaction {
             Messages.deleteWhere { Messages.id_message.eq(id_message) }
+        }
+    }
+
+    fun editUsername(oldUsername: String, newUsername: String){
+        transaction {
+            Messages.update({ id_user eq oldUsername}) { message ->
+                message[id_user] = newUsername
+            }
         }
     }
 

@@ -1,7 +1,12 @@
+@file:Suppress("NAME_SHADOWING")
+
 package com.backend.database.users
 
+import com.backend.database.messages.Messages
 import org.jetbrains.exposed.sql.*
+import org.jetbrains.exposed.sql.Table.Dual.nullable
 import org.jetbrains.exposed.sql.transactions.transaction
+import ru.povtchat.database.Util.Result
 
 object Users : Table(name = "users") {
     private val login = Users.varchar("login", 25)
@@ -28,9 +33,25 @@ object Users : Table(name = "users") {
         }
     }
 
-    fun updateUser(userDTO: UserDTO){
-        transaction {
-            Users.updateUser(userDTO)
+    fun editUser(
+        oldLogin: String,
+        newLogin: String,
+        newEmail: String,
+        newUsername: String,
+        oldUsername: String
+    ) : Result<Unit>{
+        return transaction {
+            val user = fetchUserByLogin(newLogin)
+            if (user == null || newLogin == oldLogin) {
+                Users.update({ login eq oldLogin }) { user ->
+                    user[login] = newLogin
+                    user[email] = newEmail
+                    user[username] = newUsername
+                    Messages.editUsername(oldUsername, newUsername)
+                }
+                Result.Success(message = "Пользователь изменён")
+            }
+            else Result.Error(message = "Логин занят")
         }
     }
 
@@ -43,24 +64,18 @@ object Users : Table(name = "users") {
     )
 
     fun allUsers() : List<UserDTO> = transaction { Users.selectAll().map(::resultRowToUserDto) }
-
     fun fetchUserByLogin(login: String) : UserDTO? {
         return try {
             transaction {
                 val user = Users.select { Users.login.eq(login) }.singleOrNull()
                 if (user != null){
-                    UserDTO(
-                        login = user[Users.login],
-                        password = user[password],
-                        email = user[email],
-                        username = user[username],
-                        salt = user[salt]
-                    )
+                    resultRowToUserDto(user)
                 }
                 else null
             }
         }
         catch (e: Exception) {
+            e.printStackTrace()
             null
         }
     }

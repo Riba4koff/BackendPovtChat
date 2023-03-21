@@ -8,11 +8,14 @@ import io.ktor.server.sessions.*
 import io.ktor.server.websocket.*
 import io.ktor.websocket.*
 import kotlinx.coroutines.channels.consumeEach
+import org.jetbrains.exposed.exceptions.ExposedSQLException
 import ru.povtchat.room.ChatSession
 import ru.povtchat.room.MemberAlreadyExistsException
 import ru.povtchat.room.RoomController
 
-fun Route.chatSocket(roomController: RoomController) {
+fun Route.chatSocket(
+    roomController: RoomController
+) {
     webSocket("/chat-socket") {
         val session = call.sessions.get<ChatSession>()
         if (session == null) {
@@ -21,9 +24,9 @@ fun Route.chatSocket(roomController: RoomController) {
         }
         try {
             roomController.onJoin(
-                session.username,
-                session.sessionId,
-                this
+                username = session.username,
+                sessionId = session.sessionId,
+                session = this
             )
             incoming.consumeEach { frame ->
                 if (frame is Frame.Text) {
@@ -43,8 +46,14 @@ fun Route.chatSocket(roomController: RoomController) {
     }
 }
 
-fun Route.getAllMessages(roomController: RoomController) {
+fun Route.getAllMessages(
+    roomController: RoomController
+) {
     get("/messages") {
-        call.respond(HttpStatusCode.OK, roomController.getAllMessages())
+        try {
+            call.respond(HttpStatusCode.OK, roomController.getAllMessages())
+        } catch (e: ExposedSQLException) {
+            call.respond(HttpStatusCode.Conflict, e.message.toString())
+        }
     }
 }
