@@ -5,7 +5,7 @@ import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.transactions.transaction
 
 object Messages : Table() {
-    private val id_message = integer("id_message").autoIncrement()
+    private val id_message = long("id_message").autoIncrement()
     private val id_user = varchar("id_user", 50)
     private val id_chat = long("id_chat")
     private val text = varchar("text", length = 500)
@@ -22,9 +22,23 @@ object Messages : Table() {
         }
     }
 
-    fun deleteMessage(id_message: Int) {
+    fun deleteMessage(id_message: Long) {
         transaction {
             Messages.deleteWhere { Messages.id_message.eq(id_message) }
+        }
+    }
+
+    fun fetchMessageByTimeSending(time: Long): MessageDTO? {
+        return try {
+            transaction {
+                Messages.select { time_sending eq time }.singleOrNull()?.let {  row ->
+                    rowResultToMessageDTO(row)
+                } ?: kotlin.run {
+                    null
+                }
+            }
+        } catch (e: Exception){
+            null
         }
     }
 
@@ -38,6 +52,7 @@ object Messages : Table() {
 
     private fun rowResultToMessageDTO(resultRow: ResultRow): MessageDTO =
         MessageDTO(
+            id_message = resultRow[id_message],
             id_user = resultRow[id_user],
             id_chat = resultRow[id_chat],
             text = resultRow[text],

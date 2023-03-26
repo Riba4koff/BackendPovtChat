@@ -24,49 +24,58 @@ fun Route.signUp(
                     || request.password.isBlank()
                     || request.username.isBlank()
 
-        val isPwrdTooShort = request.password.length < 8
-
-        if (areFieldsBlank || isPwrdTooShort) {
+        val isPwdTooShort = request.password.length < 8
+        if (areFieldsBlank || isPwdTooShort) {
             call.respond(HttpStatusCode.Conflict, "Fields is empty or length password < 8")
             return@post
         }
 
         val saltedHash = hashingService.generateSaltedHash(value = request.password)
-
-        val userFromDb = Users.fetchUserByLogin(request.login)
-
-        val user = UserDTO(
+        UserDTO(
             login = request.login,
             password = saltedHash.hash,
             email = request.email,
             username = request.username,
             salt = saltedHash.salt
-        )
-
-        if (userFromDb?.email == request.email) call.respond(
-            RegisterResponse(
-                successful = false,
-                userHasAlreadyExists = true
-            )
-        )
-        try {
-            Users.insert(userDTO = user)
-        } catch (e: ExposedSQLException) {
+        ).let { user ->
+            Users.fetchUserByLogin(request.login)?.let { _ ->
+                call.respond(
+                    RegisterResponse(
+                        successful = false,
+                        userHasAlreadyExists = true,
+                        message = "Логин занят"
+                    )
+                )
+            } ?: kotlin.run {
+                Users.fetchUserByEmail(request.email)?.let {_ ->
+                    call.respond(
+                        RegisterResponse(
+                            successful = false,
+                            userHasAlreadyExists = true,
+                            message = "Почта занята"
+                        )
+                    )
+                } ?: kotlin.run {
+                    Users.fetchUserByUsername(request.username)?.let { _ ->
+                        call.respond(
+                            RegisterResponse(
+                                successful = false,
+                                userHasAlreadyExists = true,
+                                message = "Имя пользователя занято"
+                            )
+                        )
+                    } ?: kotlin.run {
+                        Users.insert(user)
+                    }
+                }
+            }
             call.respond(
-                RegisterResponse(
-                    successful = false,
-                    userHasAlreadyExists = true
+                HttpStatusCode.OK, RegisterResponse(
+                    successful = true,
+                    userHasAlreadyExists = false,
+                    message = "Успешная регистрация"
                 )
             )
-        } catch (e: java.lang.IllegalArgumentException) {
-            call.respond(e.message.toString())
         }
-
-        call.respond(
-            HttpStatusCode.OK, RegisterResponse(
-                successful = true,
-                userHasAlreadyExists = false
-            )
-        )
     }
 }

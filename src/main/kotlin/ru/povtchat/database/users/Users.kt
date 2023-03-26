@@ -4,7 +4,6 @@ package com.backend.database.users
 
 import com.backend.database.messages.Messages
 import org.jetbrains.exposed.sql.*
-import org.jetbrains.exposed.sql.Table.Dual.nullable
 import org.jetbrains.exposed.sql.transactions.transaction
 import ru.povtchat.database.Util.Result
 
@@ -15,7 +14,7 @@ object Users : Table(name = "users") {
     private val email = Users.varchar("email", 25)
     private val salt = Users.varchar("salt", 100)
 
-    fun insert(userDTO: UserDTO){
+    fun insert(userDTO: UserDTO) {
         transaction {
             Users.insert {
                 it[login] = userDTO.login
@@ -27,7 +26,7 @@ object Users : Table(name = "users") {
         }
     }
 
-    fun removeUser(login: String){
+    fun removeUser(login: String) {
         transaction {
             Users.deleteWhere { Users.login.eq(login) }
         }
@@ -39,19 +38,27 @@ object Users : Table(name = "users") {
         newEmail: String,
         newUsername: String,
         oldUsername: String
-    ) : Result<Unit>{
+    ): Result<Unit> {
         return transaction {
-            val user = fetchUserByLogin(newLogin)
-            if (user == null || newLogin == oldLogin) {
-                Users.update({ login eq oldLogin }) { user ->
-                    user[login] = newLogin
-                    user[email] = newEmail
-                    user[username] = newUsername
-                    Messages.editUsername(oldUsername, newUsername)
-                }
-                Result.Success(message = "Пользователь изменён")
-            }
-            else Result.Error(message = "Логин занят")
+            val userByLogin = fetchUserByLogin(newLogin)
+            val userByUsername = fetchUserByUsername(newUsername)
+            val userByEmail = fetchUserByEmail(newEmail)
+
+            if (userByLogin == null || oldLogin == newLogin) {
+                if (userByUsername == null || newUsername == oldUsername) {
+                    if (userByEmail == null || userByEmail.email == userByLogin!!.email) {
+                        transaction {
+                            Users.update(where = { login eq oldLogin }) {
+                                it[login] = newLogin
+                                it[username] = newUsername
+                                it[email] = newEmail
+                                Messages.editUsername(oldUsername, newUsername)
+                            }
+                        }
+                        Result.Success(message = "Успешное изменение")
+                    } else Result.Error(message = "Почта занята.")
+                } else Result.Error(message = "Имя пользователя занято.")
+            } else Result.Error(message = "Логин занят.")
         }
     }
 
@@ -62,21 +69,43 @@ object Users : Table(name = "users") {
         email = row[email],
         salt = row[salt]
     )
-
-    fun allUsers() : List<UserDTO> = transaction { Users.selectAll().map(::resultRowToUserDto) }
-    fun fetchUserByLogin(login: String) : UserDTO? {
+    fun fetchUserByLogin(login: String): UserDTO? {
         return try {
             transaction {
-                val user = Users.select { Users.login.eq(login) }.singleOrNull()
-                if (user != null){
+                Users.select { Users.login.eq(login) }.singleOrNull()?.let { user ->
                     resultRowToUserDto(user)
-                }
-                else null
+                } ?: kotlin.run { null }
             }
-        }
-        catch (e: Exception) {
+        } catch (e: Exception) {
             e.printStackTrace()
             null
         }
     }
+
+    fun fetchUserByUsername(username: String): UserDTO? {
+        return try {
+            transaction {
+                Users.select { Users.username.eq(username) }.singleOrNull()?.let { user ->
+                    resultRowToUserDto(user)
+                } ?: kotlin.run { null }
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+            null
+        }
+    }
+
+    fun fetchUserByEmail(email: String): UserDTO? {
+        return try {
+            transaction {
+                Users.select { Users.email.eq(email) }.singleOrNull()?.let { user ->
+                    resultRowToUserDto(user)
+                } ?: kotlin.run { null }
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+            null
+        }
+    }
+
 }

@@ -13,7 +13,7 @@ import ru.povtchat.ModelRequests.EditUserInfoRequest.EditUsernameInfoResponse
 import ru.povtchat.database.Util.Result
 
 fun Route.editUserInfo() {
-    authenticate("jwt-auth"){
+    authenticate("jwt-auth") {
         post("edit-user-info") {
             val request = call.receive<EditUserInfoRequest>()
 
@@ -25,41 +25,38 @@ fun Route.editUserInfo() {
                 return@post
             }
 
-            if (Users.fetchUserByLogin(request.newLogin) != null && request.newLogin != request.oldLogin) {
-                call.respond(EditUsernameInfoResponse(successful = false, message = "Логин занят"))
-                return@post
-            } else {
-                try {
-                    val result = Users.editUser(
-                        oldLogin = request.oldLogin,
-                        newLogin = request.newLogin,
-                        newEmail = request.email,
-                        newUsername = request.newUsername,
-                        oldUsername = request.oldUsername
-                    )
+            try {
+                Users.editUser(
+                    oldLogin = request.oldLogin,
+                    newLogin = request.newLogin,
+                    newEmail = request.email,
+                    newUsername = request.newUsername,
+                    oldUsername = request.oldUsername
+                ).let { result ->
                     when (result) {
                         is Result.Success -> {
                             call.respond(
                                 HttpStatusCode.OK,
-                                EditUsernameInfoResponse(successful = true,
-                                    message = result.message
-                                        ?: "Неизвестная ошибка изменения пользователя."
+                                EditUsernameInfoResponse(
+                                    successful = true,
+                                    message = result.message ?: "Ошибка изменения пользователя"
                                 )
                             )
                         }
                         is Result.Error -> {
                             call.respond(
                                 HttpStatusCode.OK,
-                                EditUsernameInfoResponse(successful = false,
-                                    message = result.message
-                                        ?: "Неизвестная ошибка изменения пользователя."
+                                EditUsernameInfoResponse(
+                                    successful = false,
+                                    message = result.message ?: "Неизвестная ошибка"
                                 )
                             )
                         }
                     }
-                } catch (e: Exception) {
-                    call.respond(HttpStatusCode.Conflict, e.message.toString())
                 }
+
+            } catch (e: Exception) {
+                call.respond(HttpStatusCode.Conflict, e.message.toString())
             }
         }
     }

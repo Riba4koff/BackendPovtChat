@@ -4,6 +4,7 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class MessageDTO(
+    val id_message: Long ?= 0,
     val id_chat: Long,
     val id_user: String,
     val text: String,

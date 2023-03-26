@@ -38,16 +38,19 @@ class RoomController : IRoomController {
         senderUsername: String,
         message: String
     ) {
-        val messageDTO = MessageDTO(
+        MessageDTO(
             id_chat = 0,
             text = message,
             id_user = senderUsername,
             time_sending = System.currentTimeMillis()
-        )
-        Messages.insertMessage(messageDTO)
-        members.values.forEach { member ->
-            Json.encodeToString(messageDTO).let { parsedMessage ->
-                member.socket.send(Frame.Text(parsedMessage))
+        ).let { dto ->
+            Messages.insertMessage(dto)
+            Messages.fetchMessageByTimeSending(dto.time_sending).let { messageDTO ->
+                members.values.forEach { member ->
+                    Json.encodeToString(messageDTO).let { parsedMessage ->
+                        member.socket.send(Frame.Text(parsedMessage))
+                    }
+                }
             }
         }
     }
