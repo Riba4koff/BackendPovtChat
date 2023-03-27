@@ -8,7 +8,7 @@ fun Application.connectDataBaseRouting(){
     routing {
         Database.connect(
             url = "postgresql://postgres:FtHCZKVPTPkAXpZs5FNk@containers-us-west-42.railway.app:7382/railway",
-            driver = "org.h2.Driver",
+            driver = "org.postgresql.Driver",
             user = "postgres",
             password = "FtHCZKVPTPkAXpZs5FNk"/*"2Q2LYE!DDF3e"*/
         )
