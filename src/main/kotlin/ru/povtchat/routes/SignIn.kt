@@ -22,14 +22,14 @@ fun Route.signIn(
     tokenService: TokenService,
     config: TokenConfig,
 ) {
-    post("signin") {
+    get("signin") {
         val request = call.receive<AuthRequest>()
 
         val user = Users.fetchUserByLogin(request.login)
 
         if (user == null) {
             call.respond(HttpStatusCode.Conflict, AuthResponse(invalidLoginOrPassword = true))
-            return@post
+            return@get
         }
 
         val isValidPassword = hashingService.verify(
