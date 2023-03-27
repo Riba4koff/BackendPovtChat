@@ -13,7 +13,7 @@ group = "ru.povtchat"
 version = "0.0.1"
 application {
     //mainClass.set("io.ktor.server.netty.EngineMain")
-    mainClass.set("ru.povtchat.ApplicationKT")
+    mainClass.set("ru.povtchat.ApplicationKt")
 
     val isDevelopment: Boolean = project.ext.has("development")
     applicationDefaultJvmArgs = listOf("-Dio.ktor.development=$isDevelopment")
