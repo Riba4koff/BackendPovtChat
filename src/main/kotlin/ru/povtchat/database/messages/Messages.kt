@@ -22,12 +22,9 @@ object Messages : Table() {
         }
     }
 
-    fun deleteMessage(id_message: Long) {
-        transaction {
-            Messages.deleteWhere { Messages.id_message.eq(id_message) }
-        }
+    fun deleteAllMessages(){
+        transaction { Messages.deleteAll() }
     }
-
     fun fetchMessageByTimeSending(time: Long): MessageDTO? {
         return try {
             transaction {

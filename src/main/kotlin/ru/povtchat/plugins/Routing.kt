@@ -6,6 +6,7 @@ import com.backend.security.authenticate
 import io.ktor.server.application.*
 import io.ktor.server.routing.*
 import ru.povtchat.routes.editUserInfo
+import ru.povtchat.routes.users
 import ru.povtchat.security.hash.HashingService
 import ru.povtchat.security.token.TokenConfig
 import ru.povtchat.security.token.TokenService
@@ -25,6 +26,7 @@ fun Application.configureRouting(
             hashingService
         )
         authenticate()
+        users()
         editUserInfo()
     }
 }

@@ -14,7 +14,7 @@ import ru.povtchat.database.Util.Result
 
 fun Route.editUserInfo() {
     authenticate("jwt-auth") {
-        get("edit-user-info") {
+        post("edit-user-info") {
             val request = call.receive<EditUserInfoRequest>()
 
             if (request.newLogin.isBlank() || request.email.isBlank() || request.oldUsername.isBlank()) {
@@ -22,7 +22,7 @@ fun Route.editUserInfo() {
                     HttpStatusCode.Conflict,
                     EditUsernameInfoResponse(successful = false, message = "Заполните все поля")
                 )
-                return@get
+                return@post
             }
 
             try {

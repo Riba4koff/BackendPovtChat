@@ -1,11 +1,12 @@
 package ru.povtchat.plugins
 
+import com.backend.database.messages.Messages
 import io.ktor.server.application.*
 import io.ktor.server.routing.*
 import io.ktor.server.websocket.*
 import ru.povtchat.feautures.chats.chatSocket
-import ru.povtchat.feautures.chats.getAllMessages
 import ru.povtchat.room.RoomController
+import ru.povtchat.routes.messages
 import java.time.Duration
 
 fun Application.configureSockets() {
@@ -18,6 +19,6 @@ fun Application.configureSockets() {
     routing {
         val roomController = RoomController()
         chatSocket(roomController)
-        getAllMessages(roomController)
+        messages(roomController)
     }
 }

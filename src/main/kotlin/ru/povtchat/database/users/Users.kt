@@ -3,7 +3,9 @@
 package com.backend.database.users
 
 import com.backend.database.messages.Messages
+import kotlinx.coroutines.Dispatchers
 import org.jetbrains.exposed.sql.*
+import org.jetbrains.exposed.sql.transactions.experimental.newSuspendedTransaction
 import org.jetbrains.exposed.sql.transactions.transaction
 import ru.povtchat.database.Util.Result
 
@@ -46,7 +48,7 @@ object Users : Table(name = "users") {
 
             if (userByLogin == null || oldLogin == newLogin) {
                 if (userByUsername == null || newUsername == oldUsername) {
-                    if (userByEmail == null || userByEmail.email == userByLogin!!.email) {
+                    if (userByEmail == null || userByEmail.login == oldLogin) {
                         transaction {
                             Users.update(where = { login eq oldLogin }) {
                                 it[login] = newLogin
@@ -81,7 +83,11 @@ object Users : Table(name = "users") {
             null
         }
     }
-
+    suspend fun deleteAllUsers(){
+        newSuspendedTransaction(Dispatchers.IO) {
+            Users.deleteWhere { login neq "admin" }
+        }
+    }
     fun fetchUserByUsername(username: String): UserDTO? {
         return try {
             transaction {

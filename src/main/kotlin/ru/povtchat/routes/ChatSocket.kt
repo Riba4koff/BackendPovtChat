@@ -1,5 +1,6 @@
 package ru.povtchat.feautures.chats
 
+import com.backend.database.messages.Messages
 import io.ktor.http.*
 import io.ktor.server.application.*
 import io.ktor.server.response.*
@@ -9,6 +10,7 @@ import io.ktor.server.websocket.*
 import io.ktor.websocket.*
 import kotlinx.coroutines.channels.consumeEach
 import org.jetbrains.exposed.exceptions.ExposedSQLException
+import org.jetbrains.exposed.sql.deleteAll
 import ru.povtchat.room.ChatSession
 import ru.povtchat.room.MemberAlreadyExistsException
 import ru.povtchat.room.RoomController
@@ -46,14 +48,4 @@ fun Route.chatSocket(
     }
 }
 
-fun Route.getAllMessages(
-    roomController: RoomController
-) {
-    get("/messages") {
-        try {
-            call.respond(HttpStatusCode.OK, roomController.getAllMessages())
-        } catch (e: ExposedSQLException) {
-            call.respond(HttpStatusCode.Conflict, e.message.toString())
-        }
-    }
-}
+

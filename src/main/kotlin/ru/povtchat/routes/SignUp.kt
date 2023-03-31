@@ -15,7 +15,7 @@ import ru.povtchat.security.hash.HashingService
 fun Route.signUp(
     hashingService: HashingService,
 ) {
-    get("signup") {
+    post("signup") {
         val request = call.receive<RegisterRequest>()
         
         val areFieldsBlank =
@@ -27,7 +27,7 @@ fun Route.signUp(
         val isPwdTooShort = request.password.length < 8
         if (areFieldsBlank || isPwdTooShort) {
             call.respond(HttpStatusCode.Conflict, "Fields is empty or length password < 8")
-            return@get
+            return@post
         }
 
         val saltedHash = hashingService.generateSaltedHash(value = request.password)
