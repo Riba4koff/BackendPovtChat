@@ -49,7 +49,7 @@ class RoomController : IRoomController {
         members.values.forEach { member ->
             val parsedMessage = Json.encodeToString(messageDTO)
             member.socket.send(Frame.Text(parsedMessage))
-            }
+        }
     }
     override suspend fun sendMessageToOneUser(
         senderUsername: String,
