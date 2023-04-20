@@ -38,21 +38,18 @@ class RoomController : IRoomController {
         senderUsername: String,
         message: String
     ) {
-        MessageDTO(
+        val dto = MessageDTO(
             id_chat = 0,
             text = message,
             id_user = senderUsername,
             time_sending = System.currentTimeMillis()
-        ).let { dto ->
-            Messages.insertMessage(dto)
-            Messages.fetchMessageByTimeSending(dto.time_sending).let { messageDTO ->
-                members.values.forEach { member ->
-                    Json.encodeToString(messageDTO).let { parsedMessage ->
-                        member.socket.send(Frame.Text(parsedMessage))
-                    }
-                }
+        )
+        Messages.insertMessage(dto)
+        val messageDTO = Messages.fetchMessageByTimeSending(dto.time_sending)
+        members.values.forEach { member ->
+            val parsedMessage = Json.encodeToString(messageDTO)
+            member.socket.send(Frame.Text(parsedMessage))
             }
-        }
     }
     override suspend fun sendMessageToOneUser(
         senderUsername: String,
