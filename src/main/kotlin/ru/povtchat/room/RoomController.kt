@@ -24,7 +24,8 @@ interface IRoomController {
 class RoomController : IRoomController {
     private val members = ConcurrentHashMap<String, Member>()
     override fun onJoin(
-        username: String, sessionId: String,
+        username: String, 
+        sessionId: String,
         session: WebSocketSession
     ) {
         if (members.containsKey(username)) throw MemberAlreadyExistsException()
