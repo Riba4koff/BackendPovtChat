@@ -10,7 +10,7 @@ fun Application.connectDataBaseRouting(){
             url = "jdbc:postgresql://localhost/postgres",
             driver = "org.postgresql.Driver",
             user = "postgres",
-            password = "2Q2LYE!DDF3e"
+            password = "хуй вам"
         )
     }
 }
